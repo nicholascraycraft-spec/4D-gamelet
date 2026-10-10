@@ -1,6 +1,6 @@
 # 4D-gamelet
 
-**Tether** — a 4D viewer and gamelet. Open `tether-4d.html` in a browser.
+**Tether** — a 4D viewer and gamelet. Open `index.html` in a browser, or play it at https://nicholascraycraft-spec.github.io/4D-gamelet/
 
 You're a pinhole camera in four dimensions. Your film is the 3-sphere of directions
 around you, charted into a solid ball: straight ahead at the centre, straight behind
