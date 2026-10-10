@@ -1,0 +1,1279 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tether — reach the sphere in 4D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --field:#0b1218;
+    --panel:rgba(14,22,30,.86);
+    --edge:rgba(216,178,106,.22);
+    --ink:#ece6d9;
+    --muted:#8a97a3;
+    --brass:#d9b26a;
+    --glass:#6fb8c9;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+    --serif:"Fraunces",Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--field);color:var(--ink);font-family:var(--sans);overflow:hidden}
+  canvas{position:fixed;left:0;top:0;right:0;bottom:0;display:block;touch-action:none}
+
+  .masthead{
+    position:fixed;left:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 18px) 20px 0 22px;
+    pointer-events:none;z-index:5;
+  }
+  .masthead h1{
+    font-family:var(--serif);font-weight:300;font-size:22px;letter-spacing:.01em;margin:0;line-height:1.1;
+    font-variation-settings:"opsz" 96;
+  }
+  .masthead p{margin:5px 0 0;font-size:11.5px;color:var(--muted);max-width:30ch;line-height:1.5}
+
+  .panel{
+    position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 12px);
+    width:290px;max-height:calc(100% - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 24px);
+    overflow-y:auto;background:var(--panel);backdrop-filter:blur(14px);
+    border:1px solid var(--edge);border-radius:3px;padding:14px 14px 16px;z-index:6;
+    font-size:12px;
+  }
+  .panel.hid{display:none}
+  .panel h2{font-family:var(--serif);font-weight:500;font-size:12.5px;margin:0 0 9px;color:var(--brass);
+    font-variation-settings:"opsz" 14;letter-spacing:.02em}
+  .panel h2+h2,.grp+.grp{margin-top:0}
+  .grp{padding:11px 0;border-top:1px solid rgba(255,255,255,.07)}
+  .grp:first-of-type{border-top:0;padding-top:2px}
+  label{display:block;color:var(--muted);margin-bottom:5px;font-size:11px;letter-spacing:.01em}
+  label b{color:var(--ink);font-weight:400;font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:var(--brass);margin:0 0 2px;height:18px}
+  select{width:100%;background:#131d26;color:var(--ink);border:1px solid var(--edge);
+    border-radius:2px;padding:6px 7px;font-family:var(--sans);font-size:12px}
+  .chk{display:flex;align-items:center;gap:7px;margin:6px 0;color:var(--muted);font-size:11.5px;cursor:pointer}
+  .chk input{accent-color:var(--glass)}
+  .btn{background:transparent;color:var(--ink);border:1px solid var(--edge);border-radius:2px;
+    padding:7px 9px;font-family:var(--sans);font-size:11.5px;cursor:pointer;width:100%}
+  .btn:hover{border-color:var(--brass);color:var(--brass)}
+  .btn:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--glass);outline-offset:2px}
+
+  .pad{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:6px}
+  .pad button{background:#131d26;border:1px solid rgba(255,255,255,.08);color:var(--muted);
+    border-radius:2px;padding:7px 0;font-family:var(--sans);font-size:11px;cursor:pointer;
+    touch-action:none;user-select:none}
+  .pad button:active,.pad button.on{background:var(--brass);color:#0b1218;border-color:var(--brass)}
+
+  .keys{color:var(--muted);line-height:1.75;font-size:11px}
+  .keys kbd{font-family:var(--sans);color:var(--ink);background:#131d26;border:1px solid rgba(255,255,255,.1);
+    border-radius:2px;padding:0 4px;font-size:10.5px}
+  .keys .star{color:var(--brass)}
+
+  .hud{
+    position:fixed;left:0;bottom:0;padding:0 22px calc(env(safe-area-inset-bottom,0px) + 16px);
+    font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;pointer-events:none;z-index:5;line-height:1.7
+  }
+  .hud b{color:var(--ink);font-weight:400}
+  .legend{display:flex;gap:11px;flex-wrap:wrap;margin-top:3px}
+  .legend i{width:7px;height:7px;display:inline-block;border-radius:50%;margin-right:4px;vertical-align:1px}
+
+  #grid{position:fixed;left:0;top:0;right:0;bottom:0;display:grid;pointer-events:none;z-index:3}
+  #grid>div{border:1px solid rgba(255,255,255,.06);display:flex;align-items:flex-start;justify-content:center}
+  #grid span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    padding:calc(env(safe-area-inset-top,0px) + 9px) 10px 0}
+  #grid b{color:var(--brass);font-weight:400;letter-spacing:.08em}
+  body.panels .masthead p{display:none}
+
+  .note{color:var(--muted);font-size:11px;line-height:1.6;margin:0 0 9px}
+  #win{position:fixed;transform:translate(-50%,-50%);z-index:8;display:none;
+    background:rgba(14,22,30,.95);backdrop-filter:blur(14px);
+    border:1px solid var(--brass);border-radius:3px;padding:18px 20px 16px;
+    text-align:center;width:258px}
+  #win.show{display:block}
+  #win h3{font-family:var(--serif);font-weight:500;font-size:17px;margin:0 0 7px;color:var(--brass);
+    font-variation-settings:"opsz" 30}
+  #win p{margin:0 0 13px;font-size:11.5px;color:var(--muted);line-height:1.6}
+  #win b{color:var(--ink);font-weight:400;font-variant-numeric:tabular-nums}
+
+  .toggle{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:7;
+    background:var(--panel);border:1px solid var(--edge);color:var(--brass);border-radius:2px;
+    padding:6px 9px;font-size:11px;cursor:pointer;font-family:var(--sans);display:none}
+  .toggle.show{display:block}
+
+  @media (max-width:760px){
+    .panel{width:auto;left:12px;right:12px;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
+      max-height:52%}
+    .masthead p{display:none}
+    .hud{display:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="grid"></div>
+
+<div class="masthead">
+  <h1>Tether</h1>
+  <p>Reach the green sphere. You see direction, never range — apparent size is the only clue.</p>
+</div>
+
+<button class="toggle" id="toggle">controls</button>
+
+<div class="panel" id="panel">
+  <div class="grp">
+    <h2>Scene</h2>
+    <select id="scene">
+      <option value="goal" selected>Reach the sphere</option>
+      <option value="scatter">Scattered hypercubes</option>
+      <option value="tesseract">Tesseract</option>
+      <option value="pair">Two tesseracts, one step ana</option>
+      <option value="cell24">24-cell</option>
+      <option value="lattice">Hypercubic lattice</option>
+      <option value="hopf">Hopf fibration on a 3-sphere</option>
+    </select>
+    <label style="margin-top:9px">Layout</label>
+    <select id="layout">
+      <option value="panels" selected>Six views at once</option>
+      <option value="orbit">Single orbit view</option>
+    </select>
+    <div style="display:flex;gap:4px;margin-top:6px">
+      <button class="btn" id="reset">Reset camera</button>
+    </div>
+  </div>
+
+  <div class="grp" id="missiongrp">
+    <h2>Mission</h2>
+    <p class="note">A tether holds you within 7 units of where you started. Every target sphere
+      is the same size, so how large it looks is how near it is. The grey slabs are solid.
+      Sidesteps are slow; turn toward the sphere and fly forward for a better score.</p>
+    <button class="btn" id="newlevel">New layout</button>
+    <label class="chk" style="margin-top:8px"><input type="checkbox" id="showrange"> Show range to target</label>
+  </div>
+
+  <div class="grp">
+    <h2>Optics</h2>
+    <label>Field of view <b id="fovv">180°</b></label>
+    <input type="range" id="fov" min="40" max="360" value="180" step="1">
+    <label>Film: flat hyperplane <b id="curvv">3-sphere</b></label>
+    <input type="range" id="curv" min="0" max="100" value="100" step="1">
+    <label>Distance falloff <b id="fadev">0.12</b></label>
+    <input type="range" id="fade" min="1" max="60" value="12" step="1">
+  </div>
+
+  <div class="grp">
+    <h2>Display</h2>
+    <label class="chk"><input type="checkbox" id="opaque" checked> Opaque surfaces (not wireframe)</label>
+    <label class="chk"><input type="checkbox" id="shadow" checked> Cast shadows</label>
+    <label>Edge emphasis <b id="edgev">0.55</b></label>
+    <input type="range" id="edge" min="0" max="100" value="55" step="1">
+    <label>Light direction, rotated toward ana <b id="lightv">0°</b></label>
+    <input type="range" id="light" min="-180" max="180" value="0" step="1">
+    <label class="chk"><input type="checkbox" id="showFilm" checked> Film boundary</label>
+    <label class="chk"><input type="checkbox" id="showAx" checked> Axis vanishing points</label>
+    <label class="chk"><input type="checkbox" id="solid" checked> Obstacles are solid</label>
+    <label class="chk"><input type="checkbox" id="spin"> Drift the camera ana-ward</label>
+  </div>
+
+  <div class="grp">
+    <h2>Move the camera</h2>
+    <div class="pad" id="padT"></div>
+    <div style="height:4px"></div>
+    <div class="pad" id="padR"></div>
+  </div>
+
+  <div class="grp">
+    <h2>Keys</h2>
+    <div class="keys">
+      <kbd>W</kbd><kbd>S</kbd> forward / back<br>
+      <kbd>A</kbd><kbd>D</kbd> left / right &nbsp; <kbd>R</kbd><kbd>F</kbd> up / down<br>
+      <kbd>Q</kbd><kbd>E</kbd> kata / ana — the fourth direction<br>
+      <kbd>←</kbd><kbd>→</kbd> yaw &nbsp; <kbd>↑</kbd><kbd>↓</kbd> pitch &nbsp; <kbd>Z</kbd><kbd>X</kbd> roll<br>
+      <span class="star"><kbd>[</kbd><kbd>]</kbd> turn forward into ana</span><br>
+      <kbd>N</kbd><kbd>M</kbd> · <kbd>K</kbd><kbd>L</kbd> the other two 4D turns<br>
+      Scroll to zoom · drag to orbit (single-view layout)
+    </div>
+    <button class="btn" id="hide" style="margin-top:10px">Hide panel</button>
+  </div>
+</div>
+
+<div class="hud">
+  <div>position <b id="pos">0, 0, 0, 0</b> &nbsp;·&nbsp; looking <b id="fwd">0, 0, 0, 1</b> <span id="contact" style="color:#d9b26a"></span></div>
+  <div id="mission">tether <b id="tether">0.0 / 7.0</b> &nbsp;·&nbsp; travelled <b id="plen">0.0</b><span id="rangeline"></span></div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<div id="win">
+  <h3>Reached it</h3>
+  <div id="wstars" style="font-size:22px;letter-spacing:.18em;color:var(--brass);margin:0 0 6px">★★★</div>
+  <p>Travelled <b id="wplen">0</b> against a direct line of <b id="wdist">0</b><br>
+    efficiency <b id="weff">0%</b></p>
+  <button class="btn" id="again">Next layout</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ---------------------------------------------------------------
+   The camera sits at a point in R^4. Its film is the unit 3-sphere
+   around that point. A scene point maps to the unit direction that
+   points at it; that direction IS a point of S^3.
+
+   To look at the exposure we need a chart S^3 -> solid ball B^3.
+   Straight-ahead goes to the centre, straight-behind smears over
+   the boundary sphere, and the radius is the angle off-axis.
+   Everything below is that map, plus enough scaffolding to fly.
+   --------------------------------------------------------------- */
+
+var canvas = document.getElementById('c');
+var renderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+renderer.setClearColor(0x0b1218, 1);
+renderer.autoClear = false;
+var scene = new THREE.Scene();
+var vcam = new THREE.PerspectiveCamera(42, 1, 0.01, 200);
+
+/* ---- 4D camera state ---- */
+var cam = { p:[0,0,0,0], e:[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]] };
+// e[0]=right (X)  e[1]=up (Y)  e[2]=ana (Z)  e[3]=forward (W)
+
+function rot(i,j,a){
+  var c=Math.cos(a), s=Math.sin(a), ei=cam.e[i], ej=cam.e[j];
+  for(var k=0;k<4;k++){ var u=ei[k], v=ej[k]; ei[k]=c*u+s*v; ej[k]=-s*u+c*v; }
+}
+function ortho(){
+  var e=cam.e,i,j,k;
+  for(i=0;i<4;i++){
+    for(j=0;j<i;j++){
+      var d=e[i][0]*e[j][0]+e[i][1]*e[j][1]+e[i][2]*e[j][2]+e[i][3]*e[j][3];
+      for(k=0;k<4;k++) e[i][k]-=d*e[j][k];
+    }
+    var n=Math.sqrt(e[i][0]*e[i][0]+e[i][1]*e[i][1]+e[i][2]*e[i][2]+e[i][3]*e[i][3])||1;
+    for(k=0;k<4;k++) e[i][k]/=n;
+  }
+}
+function move(axis,d){ var v=cam.e[axis]; for(var k=0;k<4;k++) cam.p[k]+=v[k]*d; }
+
+/* ---- parameters ---- */
+var thetaMax = Math.PI/2, curv = 1, fade = 0.12, tmaxFlat = Math.tan(Math.PI/2*0.99);
+var sceneKey = 'goal', dirty = true;
+
+/* ---- scenes: arrays of polylines {pts:[[x,y,z,w]...], col:[r,g,b]|null} ---- */
+var _cache={};
+function buildTesseract(){
+  var V=[],i,b;
+  for(i=0;i<16;i++) V.push([(i&1?1:-1),(i&2?1:-1),(i&4?1:-1),(i&8?1:-1)]);
+  var out=[];
+  for(i=0;i<16;i++) for(b=0;b<4;b++){ var j=i^(1<<b); if(j>i) out.push({pts:[V[i],V[j]],col:null}); }
+  return out;
+}
+// Two unit tesseracts (edge 2) stacked one whole breadth apart along the
+// camera's ana axis, so they meet on a shared cubic cell at z = 1.
+function buildTesseractPair(){
+  var out=[], cols=[[1.00,0.70,0.34],[0.38,0.82,0.98]], c,i,b;
+  for(c=0;c<2;c++){
+    var off=c*2, V=[];
+    for(i=0;i<16;i++) V.push([(i&1?1:-1),(i&2?1:-1),(i&4?1:-1)+off,(i&8?1:-1)]);
+    for(i=0;i<16;i++) for(b=0;b<4;b++){ var j=i^(1<<b); if(j>i) out.push({pts:[V[i],V[j]],col:cols[c]}); }
+  }
+  return out;
+}
+// One box: centre, per-axis half-extents [hx,hy,hz,hw], colour. Per-axis
+// extents are what let a box be a hyperslab — thin on one axis, broad on the
+// other three — which is the only kind of box that actually blocks you in 4D.
+function hcube(c,s,col,out){
+  var V=[],i,b;
+  for(i=0;i<16;i++) V.push([c[0]+(i&1?s[0]:-s[0]), c[1]+(i&2?s[1]:-s[1]),
+                            c[2]+(i&4?s[2]:-s[2]), c[3]+(i&8?s[3]:-s[3])]);
+  for(i=0;i<16;i++) for(b=0;b<4;b++){ var j=i^(1<<b); if(j>i) out.push({pts:[V[i],V[j]],col:col}); }
+  return out;
+}
+// A 4-ball drawn as its six coordinate great circles.
+function hball(c,r,col,out){
+  var PL=[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]], SEG=72, q,st;
+  for(q=0;q<PL.length;q++){
+    var a=PL[q][0], b=PL[q][1], pts=[];
+    for(st=0;st<=SEG;st++){
+      var t=st/SEG*Math.PI*2, pt=[c[0],c[1],c[2],c[3]];
+      pt[a]=c[a]+r*Math.cos(t); pt[b]=c[b]+r*Math.sin(t);
+      pts.push(pt);
+    }
+    out.push({pts:pts, col:col});
+  }
+  return out;
+}
+var SCATTER=[
+  [[ 0.0, 0.0, 0.0, 3.0], 0.90, [1.00,0.70,0.32]],
+  [[ 2.0, 0.7, 0.4, 2.6], 0.65, [0.36,0.82,0.98]],
+  [[-1.9,-0.9, 0.3, 2.4], 0.50, [1.00,0.45,0.76]],
+  [[ 0.4, 2.0,-1.0, 3.0], 0.75, [0.52,0.95,0.52]],
+  [[-0.3,-2.1, 1.6, 2.2], 0.45, [0.70,0.56,1.00]],
+  [[-1.4, 1.1, 2.4, 3.6], 1.00, [1.00,0.42,0.34]],
+  [[ 1.5,-1.3,-2.2, 3.8], 0.80, [0.34,0.96,0.82]],
+  [[ 0.0, 0.0, 2.6, 1.8], 0.55, [1.00,0.88,0.40]],
+  [[ 0.0, 0.0,-2.6, 1.8], 0.55, [0.40,0.60,1.00]],
+  [[ 0.2, 0.1, 0.0,-2.6], 0.70, [0.78,0.76,0.88]]
+];
+function buildScatter(){
+  var out=[];
+  for(var i=0;i<SCATTER.length;i++){
+    var h=SCATTER[i][1];
+    hcube(SCATTER[i][0],[h,h,h,h],SCATTER[i][2],out);
+  }
+  return out;
+}
+
+/* ---- the mission scene -------------------------------------------------
+   Seeded so a layout can be replayed, and so "New layout" is a new puzzle
+   rather than a reshuffle of the same one. The target is always the same
+   radius: that is what makes apparent size readable as range.
+   ----------------------------------------------------------------------- */
+var LEASH = 7.0, TARGET_R = 0.55, TARGET_COL = [0.32,1.00,0.48];
+var goalSeed = 1, goalTarget = [0,0,0,4], goalBoxes = [], goalRange = 0;
+
+function mulberry32(a){
+  return function(){
+    a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function genGoal(seed){
+  var rnd = mulberry32((Math.imul(seed, 2654435761) >>> 0) || 7), i, k;
+  var CLEAR = 0.52;   // keep spawn and target out of every slab
+
+  function dir(){
+    for(var tries=0; tries<80; tries++){
+      var v=[rnd()*2-1, rnd()*2-1, rnd()*2-1, rnd()*2-1];
+      var n2=v[0]*v[0]+v[1]*v[1]+v[2]*v[2]+v[3]*v[3];
+      if(n2 > 0.04 && n2 <= 1){ var n=Math.sqrt(n2); return [v[0]/n,v[1]/n,v[2]/n,v[3]/n]; }
+    }
+    return [0,0,0,1];
+  }
+  // 4D distance from a point to the surface of a box (0 when inside)
+  function gap(c,h,q){
+    var d2=0;
+    for(var j=0;j<4;j++){
+      var e=Math.abs(q[j]-c[j])-h[j];
+      if(e>0) d2+=e*e;
+    }
+    return Math.sqrt(d2);
+  }
+
+  function carve(c,h,q,m){
+    var bj=-1, bv=-1, j;
+    for(j=0;j<4;j++){ var v=Math.abs(q[j]-c[j]); if(v>bv){ bv=v; bj=j; } }
+    var cap = bv - m;
+    if(cap < 0.12) return false;
+    if(h[bj] > cap) h[bj] = cap;
+    return true;
+  }
+
+  var td = dir();
+  goalRange = 3.1 + rnd()*2.7;              // 3.1 .. 5.8, comfortably inside the tether
+  goalTarget = [td[0]*goalRange, td[1]*goalRange, td[2]*goalRange, td[3]*goalRange];
+
+  goalBoxes = [];
+  var ORIGIN = [0,0,0,0], N = 7;
+  var SPAWN_ROOM = 1.9;          // you always start in open space
+  var TARGET_ROOM = TARGET_R + 1.0;
+  for(i=0;i<N;i++){
+    var placed = null;
+    for(var attempt=0; attempt<160 && !placed; attempt++){
+      var c;
+      if(i < 4){
+        // straddle the straight run from spawn to target, nudged off the line
+        var f = 0.38 + rnd()*0.48, off = dir(), m = 0.5 + rnd()*1.5;
+        c = [goalTarget[0]*f + off[0]*m, goalTarget[1]*f + off[1]*m,
+             goalTarget[2]*f + off[2]*m, goalTarget[3]*f + off[3]*m];
+      } else {
+        var d2 = dir(), rr = 2.8 + rnd()*3.4;
+        c = [d2[0]*rr, d2[1]*rr, d2[2]*rr, d2[3]*rr];
+      }
+      var thin = Math.floor(rnd()*4) % 4, h = [0,0,0,0];
+      for(k=0;k<4;k++) h[k] = (k === thin) ? 0.14 + rnd()*0.11 : 0.85 + rnd()*1.25;
+      // Rather than discard a slab that crowds the spawn point or the target,
+      // shrink it along its roomiest axis until it clears them. Discarding
+      // instead starves the level: most candidates crowd something.
+      if(!carve(c,h,ORIGIN,SPAWN_ROOM)) continue;
+      if(!carve(c,h,goalTarget,TARGET_ROOM)) continue;
+      if(gap(c,h,ORIGIN) < SPAWN_ROOM || gap(c,h,goalTarget) < TARGET_ROOM) continue;
+      var broad=0;
+      for(k=0;k<4;k++) if(h[k] >= 0.50) broad++;
+      if(broad < 3) continue;
+      var tint = rnd();
+      placed = {c:c, h:h, col:[0.34+tint*0.34, 0.44+rnd()*0.16, 0.62-tint*0.16]};
+    }
+    if(placed) goalBoxes.push(placed);
+  }
+  delete _cache.goal;
+}
+function buildGoal(){
+  var out=[], i;
+  for(i=0;i<goalBoxes.length;i++) hcube(goalBoxes[i].c, goalBoxes[i].h, goalBoxes[i].col, out);
+  hball(goalTarget, TARGET_R, TARGET_COL, out);
+  return out;
+}
+genGoal(goalSeed);
+function build24cell(){
+  var V=[],s1,s2,a,b;
+  for(a=0;a<4;a++) for(b=a+1;b<4;b++) for(s1=-1;s1<=1;s1+=2) for(s2=-1;s2<=1;s2+=2){
+    var v=[0,0,0,0]; v[a]=s1; v[b]=s2; V.push(v);
+  }
+  var out=[],i,j;
+  for(i=0;i<V.length;i++) for(j=i+1;j<V.length;j++){
+    var d=0,k; for(k=0;k<4;k++){ var t=V[i][k]-V[j][k]; d+=t*t; }
+    if(Math.abs(d-2)<1e-6) out.push({pts:[V[i],V[j]],col:null});
+  }
+  return out;
+}
+function buildLattice(c){
+  var S=2, R=7.5, R2=R*R, N=4, out=[];
+  var b0=Math.round(c[0]/S), b1=Math.round(c[1]/S), b2=Math.round(c[2]/S), b3=Math.round(c[3]/S);
+  function inR(p){ var a=p[0]-c[0],b=p[1]-c[1],d=p[2]-c[2],e=p[3]-c[3]; return a*a+b*b+d*d+e*e<R2; }
+  for(var i=-N;i<=N;i++) for(var j=-N;j<=N;j++) for(var k=-N;k<=N;k++) for(var l=-N;l<=N;l++){
+    var p=[(b0+i)*S,(b1+j)*S,(b2+k)*S,(b3+l)*S];
+    if(!inR(p)) continue;
+    for(var ax=0;ax<4;ax++){
+      var q=[p[0],p[1],p[2],p[3]]; q[ax]+=S;
+      if(inR(q)) out.push({pts:[p,q],col:null});
+    }
+  }
+  return out;
+}
+function buildHopf(){
+  var out=[], F=40, SEG=96, R=2.6;
+  for(var f=0;f<F;f++){
+    // fibonacci point on S^2 = the base point this fibre lies over
+    var z = 1 - 2*(f+0.5)/F, r = Math.sqrt(Math.max(0,1-z*z)), ph = f*2.399963;
+    var bx = r*Math.cos(ph), by = r*Math.sin(ph), bz = z;
+    var den = Math.sqrt(2*(1+bz)); if(den<1e-6) continue;
+    var pts=[];
+    for(var s=0;s<=SEG;s++){
+      var t = s/SEG*Math.PI*2, ct=Math.cos(t), st=Math.sin(t);
+      pts.push([ R*((1+bz)*ct)/den, R*((1+bz)*st)/den,
+                 R*(bx*st-by*ct)/den, R*(bx*ct+by*st)/den ]);
+    }
+    out.push({pts:pts, col:[0.35+0.5*(bx+1)/2, 0.35+0.5*(by+1)/2, 0.4+0.55*(bz+1)/2]});
+  }
+  return out;
+}
+var SCENES = {
+  goal:     {start:[0,0,0,0],  get:function(){ return cacheStatic('goal',buildGoal); }},
+  scatter:  {start:[0,0,0,0],  get:function(){ return cacheStatic('scatter',buildScatter); }},
+  tesseract:{start:[0,0,0,-4], get:function(){ return cacheStatic('tesseract',buildTesseract); }},
+  pair:     {start:[0,0,1,-5], get:function(){ return cacheStatic('pair',buildTesseractPair); }},
+  cell24:   {start:[0,0,0,-5], get:function(){ return cacheStatic('cell24',build24cell); }},
+  lattice:  {start:[1,1,1,1],  get:function(){ return buildLattice(cam.p); }},
+  hopf:     {start:[0,0,0,-6], get:function(){ return cacheStatic('hopf',buildHopf); }}
+};
+function cacheStatic(k,f){ if(!_cache[k]) _cache[k]=f(); return _cache[k]; }
+
+/* ---- solid bodies ----
+   The pinhole is a point, but the photographer is a 4-ball of radius BODY.
+   Each hypercube is an axis-aligned box in R^4; we clamp, measure, push out. */
+var BODY = 0.26, collideOn = true, contact = false, solids = [], ballSolids = [];
+function refreshSolids(){
+  solids = []; ballSolids = []; var i;
+  if(sceneKey==='goal'){
+    for(i=0;i<goalBoxes.length;i++) solids.push(goalBoxes[i]);
+    ballSolids.push({c:goalTarget, r:TARGET_R});
+  } else if(sceneKey==='scatter'){
+    for(i=0;i<SCATTER.length;i++){
+      var h=SCATTER[i][1];
+      solids.push({c:SCATTER[i][0], h:[h,h,h,h], col:SCATTER[i][2]});
+    }
+  } else if(sceneKey==='tesseract'){
+    solids.push({c:[0,0,0,0], h:[1,1,1,1], col:[1.00,0.70,0.34]});
+  } else if(sceneKey==='pair'){
+    solids.push({c:[0,0,0,0], h:[1,1,1,1], col:[1.00,0.70,0.34]});
+    solids.push({c:[0,0,2,0], h:[1,1,1,1], col:[0.38,0.82,0.98]});
+  }
+  if(typeof syncSolid==='function') syncSolid();
+}
+var _out=[0,0,0,0], _d=[0,0,0,0];
+function collide(){
+  contact = false;
+  if(!collideOn || (!solids.length && !ballSolids.length)) return;
+  for(var pass=0; pass<3; pass++){
+    var hit=false;
+    for(var i=0;i<solids.length;i++){
+      var c=solids[i].c, h=solids[i].h, k, inside=true;
+      for(k=0;k<4;k++){
+        _d[k]=cam.p[k]-c[k]; _out[k]=0;
+        if(_d[k]>h[k]){ _out[k]=_d[k]-h[k]; inside=false; }
+        else if(_d[k]<-h[k]){ _out[k]=_d[k]+h[k]; inside=false; }
+      }
+      if(inside){
+        // centre swallowed by the box: eject along the least-penetrated axis
+        var best=0, bd=1e9, sgn=1;
+        for(k=0;k<4;k++){
+          var pen=h[k]-Math.abs(_d[k]);
+          if(pen<bd){ bd=pen; best=k; sgn=_d[k]>=0?1:-1; }
+        }
+        cam.p[best]=c[best]+sgn*(h[best]+BODY);
+        hit=true;
+      } else {
+        var L2=_out[0]*_out[0]+_out[1]*_out[1]+_out[2]*_out[2]+_out[3]*_out[3];
+        if(L2>=BODY*BODY) continue;
+        var L=Math.sqrt(L2); if(L<1e-9) continue;
+        var f=(BODY-L)/L;
+        for(k=0;k<4;k++) cam.p[k]+=_out[k]*f;
+        hit=true;
+      }
+    }
+    // A 4-ball is the easy case: one distance, one push along the line of
+    // centres. Boxes need the per-axis clamp above; a sphere has no axes.
+    for(i=0;i<ballSolids.length;i++){
+      var bc=ballSolids[i].c, need=ballSolids[i].r+BODY, q, dd=0;
+      for(q=0;q<4;q++){ _d[q]=cam.p[q]-bc[q]; dd+=_d[q]*_d[q]; }
+      if(dd >= need*need) continue;
+      if(dd < 1e-18){ cam.p[3]=bc[3]+need; hit=true; continue; }
+      var sc=need/Math.sqrt(dd);
+      for(q=0;q<4;q++) cam.p[q]=bc[q]+_d[q]*sc;
+      hit=true;
+    }
+    if(hit) contact=true; else break;
+  }
+}
+
+/* ---- the tether ----
+   A leash of radius LEASH is a 3-sphere around the spawn point. Unlike a
+   wall it cannot be gone around: it bounds every one of the four axes at
+   once, which is why it is the only thing here that reliably confines you. */
+var tethered = false, won = false, pathLen = 0, prevP = [0,0,0,0];
+function tether(){
+  tethered = false;
+  if(sceneKey !== 'goal') return;
+  var p=cam.p, n2=p[0]*p[0]+p[1]*p[1]+p[2]*p[2]+p[3]*p[3];
+  if(n2 <= LEASH*LEASH) return;
+  var f = LEASH/Math.sqrt(n2);
+  for(var k=0;k<4;k++) p[k]*=f;
+  tethered = true;
+}
+function distToTarget(){
+  var d=0; for(var k=0;k<4;k++){ var t=cam.p[k]-goalTarget[k]; d+=t*t; }
+  return Math.sqrt(d);
+}
+function checkWin(){
+  if(sceneKey !== 'goal' || won) return;
+  if(distToTarget() < TARGET_R + BODY + 0.03){
+    won = true;
+    // The shortest possible run stops at the sphere's surface, not its centre.
+    // Sliding there one axis at a time scores ~60% on average; a straight
+    // flight scores near 100%, less whatever the slabs force you round.
+    var direct = Math.max(0.01, goalRange - (TARGET_R + BODY + 0.03));
+    var eff = Math.min(1, direct / Math.max(pathLen, direct));
+    var stars = eff >= 0.85 ? 3 : eff >= 0.65 ? 2 : 1;
+    $('wplen').textContent = pathLen.toFixed(1);
+    $('wdist').textContent = direct.toFixed(1);
+    $('weff').textContent = Math.round(eff*100) + '%';
+    $('wstars').textContent = '★★★'.slice(0,stars) + '☆☆☆'.slice(0,3-stars);
+    $('win').classList.add('show');
+  }
+}
+
+/* ---- colour by the world's fourth coordinate, dimmed by 4D distance ---- */
+function hsl(h,s,l,o){
+  h=((h%1)+1)%1;
+  function f(n){ var k=(n+h*12)%12, a=s*Math.min(l,1-l);
+    return l-a*Math.max(-1,Math.min(Math.min(k-3,9-k),1)); }
+  o[0]=f(0); o[1]=f(8); o[2]=f(4);
+}
+var baseCol=[0,0,0];
+function sceneColor(p){ hsl(0.55 + p[3]*0.055, 0.62, 0.60, baseCol); }
+
+/* ---- the projection ---- */
+var overrideCol=null;
+function pv(p, B, C){
+  var e=cam.e, cp=cam.p;
+  var dx=p[0]-cp[0], dy=p[1]-cp[1], dz=p[2]-cp[2], dw=p[3]-cp[3];
+  var x=dx*e[0][0]+dy*e[0][1]+dz*e[0][2]+dw*e[0][3];
+  var y=dx*e[1][0]+dy*e[1][1]+dz*e[1][2]+dw*e[1][3];
+  var z=dx*e[2][0]+dy*e[2][1]+dz*e[2][2]+dw*e[2][3];
+  var w=dx*e[3][0]+dy*e[3][1]+dz*e[3][2]+dw*e[3][3];
+  var rho=Math.sqrt(x*x+y*y+z*z+w*w);
+  if(rho<1e-7) return false;
+  var cw=w/rho; if(cw>1)cw=1; else if(cw<-1)cw=-1;
+  var th=Math.acos(cw);
+  if(th>thetaMax) return false;
+  var sl=Math.sqrt(x*x+y*y+z*z);
+  var ux,uy,uz;
+  if(sl<1e-9){ if(th>0.5) return false; ux=0;uy=0;uz=0; }
+  else { ux=x/sl; uy=y/sl; uz=z/sl; }
+  var r, rs=th/thetaMax;
+  if(curv>0.995) r=rs;
+  else {
+    if(th>1.5533) return false;
+    r = curv*rs + (1-curv)*(Math.tan(th)/tmaxFlat);
+    if(r>1.45) return false;
+  }
+  B[0]=ux*r; B[1]=uy*r; B[2]=uz*r;
+  if(C){
+    var br = 1.05/(1+rho*fade);
+    if(br>1) br=1;
+    if(overrideCol){ C[0]=overrideCol[0]*br; C[1]=overrideCol[1]*br; C[2]=overrideCol[2]*br; }
+    else { sceneColor(p); C[0]=baseCol[0]*br; C[1]=baseCol[1]*br; C[2]=baseCol[2]*br; }
+  }
+  return true;
+}
+
+/* ---- buffers ---- */
+var MAXV = 300000;
+var pos = new Float32Array(MAXV*3), col = new Float32Array(MAXV*3);
+var geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+geo.setAttribute('color', new THREE.BufferAttribute(col,3));
+var lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
+  vertexColors:true, transparent:true, opacity:1,
+  blending:THREE.AdditiveBlending, depthTest:false, depthWrite:false
+}));
+lines.frustumCulled=false;
+scene.add(lines);
+
+var vi=0;
+function push(B0,C0,B1,C1){
+  if(vi+2>MAXV) return;
+  var o=vi*3;
+  pos[o]=B0[0]; pos[o+1]=B0[1]; pos[o+2]=B0[2];
+  col[o]=C0[0]; col[o+1]=C0[1]; col[o+2]=C0[2];
+  pos[o+3]=B1[0]; pos[o+4]=B1[1]; pos[o+5]=B1[2];
+  col[o+3]=C1[0]; col[o+4]=C1[1]; col[o+5]=C1[2];
+  vi+=2;
+}
+
+/* adaptive subdivision: a straight 4D line becomes a circular arc on the
+   film sphere, so we split until consecutive samples land close together. */
+var MAXD=7, TOL2=0.0006, POOL_P=[],POOL_B=[],POOL_C=[];
+for(var d=0;d<=MAXD+1;d++){ POOL_P.push([0,0,0,0]); POOL_B.push([0,0,0]); POOL_C.push([0,0,0]); }
+
+function sub(pa,pb,Ba,Ca,va,Bb,Cb,vb,depth){
+  if(vi+2>MAXV) return;
+  if(va&&vb){
+    var dx=Ba[0]-Bb[0], dy=Ba[1]-Bb[1], dz=Ba[2]-Bb[2];
+    var d2=dx*dx+dy*dy+dz*dz;
+    if(d2<TOL2){ push(Ba,Ca,Bb,Cb); return; }
+    if(depth>=MAXD){ if(d2<0.2) push(Ba,Ca,Bb,Cb); return; }
+  } else {
+    if(depth>=MAXD) return;
+    if(!va&&!vb&&depth>=3) return;
+  }
+  var pm=POOL_P[depth], Bm=POOL_B[depth], Cm=POOL_C[depth];
+  pm[0]=(pa[0]+pb[0])*0.5; pm[1]=(pa[1]+pb[1])*0.5;
+  pm[2]=(pa[2]+pb[2])*0.5; pm[3]=(pa[3]+pb[3])*0.5;
+  var vm=pv(pm,Bm,Cm);
+  var B1=[Bm[0],Bm[1],Bm[2]], C1=[Cm[0],Cm[1],Cm[2]], P1=[pm[0],pm[1],pm[2],pm[3]];
+  sub(pa,P1,Ba,Ca,va,B1,C1,vm,depth+1);
+  sub(P1,pb,B1,C1,vm,Bb,Cb,vb,depth+1);
+}
+
+var Ba=[0,0,0],Ca=[0,0,0],Bb=[0,0,0],Cb=[0,0,0];
+function rebuild(){
+  vi=0;
+  tmaxFlat = Math.tan(Math.min(thetaMax,1.5533));
+  if(typeof syncSolidFrame==='function') syncSolidFrame();
+  if(opaque && solidMesh.visible){
+    geo.setDrawRange(0,0);
+    updateAxes();
+    return;
+  }
+  var polys = SCENES[sceneKey].get();
+  for(var n=0;n<polys.length;n++){
+    var poly=polys[n], pts=poly.pts;
+    overrideCol = poly.col;
+    var va=pv(pts[0],Ba,Ca);
+    var pa=pts[0];
+    for(var i=1;i<pts.length;i++){
+      var vb=pv(pts[i],Bb,Cb);
+      sub(pa,pts[i],[Ba[0],Ba[1],Ba[2]],[Ca[0],Ca[1],Ca[2]],va,
+                    [Bb[0],Bb[1],Bb[2]],[Cb[0],Cb[1],Cb[2]],vb,0);
+      pa=pts[i]; va=vb; Ba[0]=Bb[0];Ba[1]=Bb[1];Ba[2]=Bb[2];
+      Ca[0]=Cb[0];Ca[1]=Cb[1];Ca[2]=Cb[2];
+      if(vi+2>MAXV) break;
+    }
+    if(vi+2>MAXV) break;
+  }
+  overrideCol=null;
+  geo.setDrawRange(0,vi);
+  geo.attributes.position.updateRange.offset=0;
+  geo.attributes.position.updateRange.count=vi*3;
+  geo.attributes.position.needsUpdate=true;
+  geo.attributes.color.updateRange.offset=0;
+  geo.attributes.color.updateRange.count=vi*3;
+  geo.attributes.color.needsUpdate=true;
+  updateAxes();
+}
+
+/* ---- the film boundary: a faint wireframe shell at radius 1 ---- */
+var filmGeo = new THREE.BufferGeometry(), fpos=[];
+(function(){
+  var RINGS=9, SEG=96, i,j;
+  for(i=1;i<RINGS;i++){
+    var lat = -Math.PI/2 + Math.PI*i/RINGS, cy=Math.sin(lat), cr=Math.cos(lat);
+    for(j=0;j<SEG;j++){
+      var a=j/SEG*Math.PI*2, b=(j+1)/SEG*Math.PI*2;
+      fpos.push(cr*Math.cos(a),cy,cr*Math.sin(a), cr*Math.cos(b),cy,cr*Math.sin(b));
+    }
+  }
+  for(i=0;i<12;i++){
+    var lo=i/12*Math.PI*2;
+    for(j=0;j<SEG;j++){
+      var a2=-Math.PI/2+Math.PI*j/SEG, b2=-Math.PI/2+Math.PI*(j+1)/SEG;
+      fpos.push(Math.cos(a2)*Math.cos(lo),Math.sin(a2),Math.cos(a2)*Math.sin(lo),
+                Math.cos(b2)*Math.cos(lo),Math.sin(b2),Math.cos(b2)*Math.sin(lo));
+    }
+  }
+  filmGeo.setAttribute('position', new THREE.Float32BufferAttribute(fpos,3));
+})();
+var film = new THREE.LineSegments(filmGeo, new THREE.LineBasicMaterial({
+  color:0x2a4250, transparent:true, opacity:0.5, blending:THREE.AdditiveBlending,
+  depthTest:false, depthWrite:false }));
+film.frustumCulled=false;
+scene.add(film);
+
+/* ---- where each world axis vanishes on the film ---- */
+var AXC=[[1,.36,.36],[.42,.16,.16],[.36,1,.54],[.15,.4,.24],[.42,.65,1],[.16,.26,.42],[1,.83,.36],[.44,.36,.16]];
+var AXN=['+x','−x','+y','−y','+z','−z','+w','−w'];
+var axPos=new Float32Array(8*3), axCol=new Float32Array(8*3);
+var axGeo=new THREE.BufferGeometry();
+axGeo.setAttribute('position',new THREE.BufferAttribute(axPos,3));
+axGeo.setAttribute('color',new THREE.BufferAttribute(axCol,3));
+var axPts=new THREE.Points(axGeo,new THREE.PointsMaterial({size:7,sizeAttenuation:false,
+  vertexColors:true,transparent:true,depthTest:false,depthWrite:false}));
+axPts.frustumCulled=false;
+scene.add(axPts);
+var tB=[0,0,0];
+function updateAxes(){
+  var n=0;
+  for(var a=0;a<4;a++) for(var s=0;s<2;s++){
+    var idx=a*2+s, sg=s?-1:1;
+    var far=[cam.p[0],cam.p[1],cam.p[2],cam.p[3]];
+    far[a]+=sg*1e7;
+    if(pv(far,tB,null)){
+      axPos[n*3]=tB[0]; axPos[n*3+1]=tB[1]; axPos[n*3+2]=tB[2];
+      axCol[n*3]=AXC[idx][0]; axCol[n*3+1]=AXC[idx][1]; axCol[n*3+2]=AXC[idx][2];
+      n++;
+    }
+  }
+  axGeo.setDrawRange(0,n);
+  axGeo.attributes.position.needsUpdate=true;
+  axGeo.attributes.color.needsUpdate=true;
+}
+(function(){
+  var L=document.getElementById('legend'), h='';
+  for(var i=0;i<8;i++){
+    var c=AXC[i], hex='#'+[0,1,2].map(function(k){ return ('0'+Math.round(c[k]*255).toString(16)).slice(-2); }).join('');
+    h+='<span><i style="background:'+hex+'"></i>'+AXN[i]+'</span>';
+  }
+  L.innerHTML = h + '<span style="color:#6f7d89">where each world axis vanishes</span>';
+})();
+
+/* ---- opaque mode --------------------------------------------------------
+   Wireframe cheats: it never has to decide what hides what. To render
+   opaquely we march each screen ray through the film ball; every sample
+   inside the ball IS a direction on S^3, so we un-chart it, fire that ray
+   into R^4, and take the nearest box. First sample that hits anything wins.
+   ------------------------------------------------------------------------ */
+var MAXBOX = 12;
+var uBoxC=[], uBoxH=[], uBoxP=[];
+for(var q=0;q<MAXBOX;q++){
+  uBoxC.push(new THREE.Vector4()); uBoxH.push(new THREE.Vector4(1,1,1,1)); uBoxP.push(new THREE.Vector4());
+}
+var solidUni = {
+  uE:{value:new THREE.Matrix4()}, uCamP:{value:new THREE.Vector4()},
+  uThetaMax:{value:Math.PI/2}, uCurv:{value:1}, uTanMax:{value:1}, uFade:{value:0.12},
+  uN:{value:0}, uC:{value:uBoxC}, uH:{value:uBoxH}, uP:{value:uBoxP},
+  uShadow:{value:1}, uEdge:{value:0.55},
+  uTC:{value:new THREE.Vector4()}, uTCol:{value:new THREE.Vector3(0.32,1.0,0.48)},
+  uTR:{value:0.55}, uTOn:{value:0},
+  uL:{value:new THREE.Vector4(0.42,0.78,0.30,-0.34).normalize()}
+};
+var lightAna = 0;   // swings the light between the w and z axes
+function setLight(){
+  var base = [0.42, 0.78, 0.30, -0.34];
+  var a = lightAna, c = Math.cos(a), s = Math.sin(a);
+  var z = base[2]*c - base[3]*s, w = base[2]*s + base[3]*c;
+  solidUni.uL.value.set(base[0], base[1], z, w).normalize();
+}
+setLight();
+var solidMat = new THREE.ShaderMaterial({
+  uniforms: solidUni, transparent:true, depthTest:false, depthWrite:false,
+  side: THREE.BackSide,
+  vertexShader:[
+    'varying vec3 vW;',
+    'void main(){ vec4 wp = modelMatrix*vec4(position,1.0); vW = wp.xyz;',
+    '  gl_Position = projectionMatrix*viewMatrix*wp; }'
+  ].join('\n'),
+  fragmentShader:[
+    'precision highp float;',
+    'varying vec3 vW;',
+    'uniform mat4 uE; uniform vec4 uCamP, uL;',
+    'uniform float uThetaMax, uCurv, uTanMax, uFade, uShadow, uEdge;',
+    'uniform int uN;',
+    'uniform vec4 uC['+MAXBOX+']; uniform vec4 uH['+MAXBOX+']; uniform vec4 uP['+MAXBOX+'];',
+    'uniform vec4 uTC; uniform vec3 uTCol; uniform float uTR, uTOn;',
+
+    'float angleFor(float r){',
+    '  float a = r*uThetaMax;',
+    '  if(uCurv > 0.995) return a;',
+    '  float b = atan(r*uTanMax);',
+    '  float lo = min(a,b), hi = min(max(a,b), 1.5533);',
+    '  for(int i=0;i<6;i++){',
+    '    float m = 0.5*(lo+hi);',
+    '    float f = uCurv*(m/uThetaMax) + (1.0-uCurv)*(tan(m)/uTanMax);',
+    '    if(f < r) lo = m; else hi = m;',
+    '  }',
+    '  return 0.5*(lo+hi);',
+    '}',
+
+    // One sample of the film ball: un-chart to a direction on S^3, fire it
+    // into R^4, return the nearest hit. bk flags the target sphere, which
+    // shades differently and has no edges to draw.
+    'bool probe(vec3 p, out float bt, out vec3 bc, out vec4 bn, out vec4 bl, out vec4 bh, out vec4 bd, out float bk){',
+    '  bt = 0.0; bc = vec3(0.0); bn = vec4(0.0); bl = vec4(0.0);',
+    '  bh = vec4(1.0); bd = vec4(0.0,0.0,0.0,1.0); bk = 0.0;',
+    '  float r = length(p);',
+    '  if(r > 1.0 || r < 1e-4) return false;',
+    '  float th = angleFor(r);',
+    '  vec4 d4 = uE * vec4(sin(th)*(p/r), cos(th));',
+    '  vec4 sd = d4 + step(abs(d4), vec4(1e-6))*1e-6;',
+    '  bd = sd;',
+    '  vec4 inv = 1.0/sd;',
+    '  float best = 1e20; bool got = false;',
+    '  for(int k=0;k<'+MAXBOX+';k++){',
+    '    if(k >= uN) break;',
+    '    vec4 hv = uH[k];',
+    '    vec4 o = uCamP - uC[k];',
+    '    vec4 ta = (-hv - o)*inv, tb = (hv - o)*inv;',
+    '    vec4 lo = min(ta,tb), hi = max(ta,tb);',
+    '    float tn = max(max(lo.x,lo.y), max(lo.z,lo.w));',
+    '    float tf = min(min(hi.x,hi.y), min(hi.z,hi.w));',
+    '    if(tn > tf || tf < 0.0) continue;',
+    '    float tt = tn > 0.0 ? tn : tf;',
+    '    if(tt < best){',
+    '      best = tt; bc = uP[k].xyz; bh = hv; bk = 0.0;',
+    '      bn = normalize(-sign(sd)*step(tn - 1e-4, lo) + vec4(1e-7));',
+    '      bl = o + tt*sd;',
+    '      got = true;',
+    '    }',
+    '  }',
+    '  if(uTOn > 0.5){',
+    '    vec4 o = uCamP - uTC;',
+    '    float qb = dot(o, sd);',
+    '    float qc = dot(o, o) - uTR*uTR;',
+    '    float qd = qb*qb - qc;',
+    '    if(qd >= 0.0){',
+    '      float sr = sqrt(qd);',
+    '      float tt = -qb - sr;',
+    '      if(tt < 0.0) tt = -qb + sr;',
+    '      if(tt >= 0.0 && tt < best){',
+    '        best = tt; bc = uTCol; bh = vec4(uTR); bk = 1.0;',
+    '        bl = o + tt*sd; bn = bl/uTR;',
+    '        got = true;',
+    '      }',
+    '    }',
+    '  }',
+    '  bt = best;',
+    '  return got;',
+    '}',
+
+    'void main(){',
+    '  vec3 ro = cameraPosition;',
+    '  vec3 rd = normalize(vW - ro);',
+    '  float b = dot(ro,rd), cq = dot(ro,ro) - 1.0;',
+    '  float disc = b*b - cq;',
+    '  if(disc < 0.0) discard;',
+    '  float sq = sqrt(disc);',
+    '  float t0 = max(-b - sq, 0.0), t1 = -b + sq;',
+    '  if(t1 <= t0) discard;',
+    '  const int STEPS = 48;',
+    '  float dt = (t1-t0)/float(STEPS);',
+    '  float jit = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898,78.233)))*43758.5453);',
+    '  float tPrev = t0;',
+    '  float bt, bk, bt2, bk2; vec3 bc, bc2;',
+    '  vec4 bn, bl, bd, bh, bn2, bl2, bd2, bh2;',
+    '  for(int i=0;i<STEPS;i++){',
+    '    float t = t0 + (float(i)+jit)*dt;',
+    '    if(probe(ro + rd*t, bt, bc, bn, bl, bh, bd, bk)){',
+
+    // Bisect back toward the last known miss so the hit point is sharp
+    // enough for edge detection; the coarse step alone is far too noisy.
+    '      float lo = tPrev, hi = t;',
+    '      for(int q=0;q<7;q++){',
+    '        float mid = 0.5*(lo+hi);',
+    '        if(probe(ro + rd*mid, bt2, bc2, bn2, bl2, bh2, bd2, bk2)){',
+    '          hi = mid; bt=bt2; bc=bc2; bn=bn2; bl=bl2; bh=bh2; bd=bd2; bk=bk2;',
+    '        } else lo = mid;',
+    '      }',
+
+    '      float ndl = max(0.0, dot(bn, uL));',
+    '      float sh = 1.0;',
+    '      if(uShadow > 0.5 && ndl > 0.0){',
+    '        vec4 hp = uCamP + bt*bd + bn*0.006;',
+    '        vec4 li = 1.0/(uL + step(abs(uL), vec4(1e-6))*1e-6);',
+    '        for(int k=0;k<'+MAXBOX+';k++){',
+    '          if(k >= uN) break;',
+    '          vec4 hv2 = uH[k];',
+    '          vec4 o2 = hp - uC[k];',
+    '          vec4 sa = (-hv2 - o2)*li, sb2 = (hv2 - o2)*li;',
+    '          vec4 lo2 = min(sa,sb2), hi2 = max(sa,sb2);',
+    '          float sn = max(max(lo2.x,lo2.y), max(lo2.z,lo2.w));',
+    '          float sf = min(min(hi2.x,hi2.y), min(hi2.z,hi2.w));',
+    '          if(sn <= sf && sf > 1e-3){ sh = 0.10; break; }',
+    '        }',
+    '        if(sh > 0.5 && uTOn > 0.5){',
+    '          vec4 o3 = hp - uTC;',
+    '          float b3 = dot(o3, uL);',
+    '          if(b3 < 0.0 && b3*b3 - (dot(o3,o3) - uTR*uTR) >= 0.0) sh = 0.10;',
+    '        }',
+    '      }',
+    '      float lam = 0.20 + 0.80*ndl*sh;',
+    '      float f = 1.0/(1.0 + bt*uFade);',
+    '      vec3 col = bc*lam*f*1.3;',
+    '      if(bk > 0.5){',
+    '        float rim = 1.0 - max(0.0, dot(bn, -bd));',
+    '        col = bc*(0.42 + 0.58*ndl*sh)*f*1.35 + bc*pow(rim, 2.2)*0.90;',
+    '      }',
+
+    // A 1-face of the box is where TWO slab boundaries meet at once, so the
+    // edge test is the second-smallest distance to a boundary, with the face
+    // we are standing on excluded. Only surfaces we actually hit get tested,
+    // which is the hidden-line removal: occluded edges are never reached.
+    '      if(uEdge > 0.001 && bk < 0.5){',
+    '        vec4 d = bh - abs(bl) + abs(bn)*1e3;',
+    '        float sec = min(min(min(max(d.x,d.y), max(d.x,d.z)),',
+    '                            min(max(d.x,d.w), max(d.y,d.z))),',
+    '                        min(max(d.y,d.w), max(d.z,d.w)));',
+    '        float hmin = min(min(bh.x,bh.y), min(bh.z,bh.w));',
+    '        float lw = clamp(0.016*bt, 0.003, 0.30*hmin);',
+    '        float e = (1.0 - smoothstep(lw*0.40, lw, sec)) * uEdge;',
+    '        vec3 wire = mix(bc, vec3(1.0), 0.60) * f * (0.55 + 0.75*lam);',
+    '        col = mix(col, wire, e);',
+    '      }',
+    '      gl_FragColor = vec4(col, 1.0);',
+    '      return;',
+    '    }',
+    '    tPrev = t;',
+    '  }',
+    '  discard;',
+    '}'
+  ].join('\n')
+});
+var solidMesh = new THREE.Mesh(new THREE.SphereGeometry(1.0, 48, 32), solidMat);
+solidMesh.frustumCulled = false;
+solidMesh.visible = false;
+solidMesh.renderOrder = 2;
+film.renderOrder = 1; lines.renderOrder = 1; axPts.renderOrder = 3;
+scene.add(solidMesh);
+
+var opaque = false;
+function syncSolid(){
+  var n = Math.min(solids.length, MAXBOX);
+  for(var i=0;i<n;i++){
+    var s = solids[i];
+    uBoxC[i].set(s.c[0], s.c[1], s.c[2], s.c[3]);
+    uBoxH[i].set(s.h[0], s.h[1], s.h[2], s.h[3]);
+    uBoxP[i].set(s.col[0], s.col[1], s.col[2], 0);
+  }
+  solidUni.uN.value = n;
+  var ball = (sceneKey === 'goal');
+  solidUni.uTOn.value = ball ? 1 : 0;
+  if(ball){
+    solidUni.uTC.value.set(goalTarget[0], goalTarget[1], goalTarget[2], goalTarget[3]);
+    solidUni.uTR.value = TARGET_R;
+    solidUni.uTCol.value.set(TARGET_COL[0], TARGET_COL[1], TARGET_COL[2]);
+  }
+  var live = opaque && (n > 0 || ball);
+  solidMesh.visible = live;
+  lines.visible = !live;
+  renderer.setPixelRatio(live ? 1 : Math.min(window.devicePixelRatio||1, 2));
+  resize();
+}
+function syncSolidFrame(){
+  var e = cam.e, m = solidUni.uE.value.elements;
+  for(var i=0;i<4;i++) for(var k=0;k<4;k++) m[i*4+k] = e[i][k];
+  solidUni.uCamP.value.set(cam.p[0], cam.p[1], cam.p[2], cam.p[3]);
+  solidUni.uThetaMax.value = thetaMax;
+  solidUni.uCurv.value = curv;
+  solidUni.uTanMax.value = tmaxFlat;
+  solidUni.uFade.value = fade;
+}
+
+/* ---- six simultaneous views ---------------------------------------------
+   One orbit view can only ever show the exposure from one side. Six
+   near-orthographic cameras down the ball's own axes show all of it at
+   once: the ball's axes are the camera's right, up and ana, so the
+   In/Out pair is looking straight down the fourth dimension.
+   ------------------------------------------------------------------------ */
+var VIEWS=[
+  {n:'Right', s:'+x', d:[ 1, 0, 0], up:[0,1,0]},
+  {n:'Top',   s:'+y', d:[ 0, 1, 0], up:[0,0,-1]},
+  {n:'In',    s:'+z', d:[0, 0, 1], up:[0,1,0]},
+  {n:'Left',  s:'−x', d:[-1, 0, 0], up:[0,1,0]},
+  {n:'Bottom',s:'−y', d:[ 0,-1, 0], up:[0,0,1]},
+  {n:'Out',   s:'−z', d:[0, 0,-1], up:[0,1,0]}
+];
+var pcams=[];
+for(var pv0=0;pv0<6;pv0++) pcams.push(new THREE.PerspectiveCamera(10,1,0.1,120));
+var layout='panels', panelZoom=1, cols=3, rows=2, cellW=1, cellH=1;
+var ORDER3=[0,1,2,3,4,5], ORDER2=[0,3,1,4,2,5], order=ORDER3;
+var gridEl=document.getElementById('grid');
+
+function layoutPanels(){
+  var W=stageW, H=stageH;
+  if(W<720){ cols=2; rows=3; order=ORDER2; } else { cols=3; rows=2; order=ORDER3; }
+  cellW=W/cols; cellH=H/rows;
+  gridEl.style.gridTemplateColumns='repeat('+cols+',1fr)';
+  gridEl.style.gridTemplateRows='repeat('+rows+',1fr)';
+  var h='';
+  for(var i=0;i<6;i++){
+    var v=VIEWS[order[i]];
+    h+='<div><span><b>'+v.n+'</b> &nbsp;'+v.s+'</span></div>';
+  }
+  gridEl.innerHTML=h;
+  var D=14, R=1.18*panelZoom, asp=cellW/cellH;
+  for(var k=0;k<6;k++){
+    var vw=VIEWS[k], c=pcams[k];
+    c.position.set(vw.d[0]*D, vw.d[1]*D, vw.d[2]*D);
+    c.up.set(vw.up[0],vw.up[1],vw.up[2]);
+    c.lookAt(0,0,0);
+    c.aspect=asp;
+    var need = asp<1 ? R/asp : R;
+    c.fov = 2*Math.atan(need/D)*180/Math.PI;
+    c.updateProjectionMatrix();
+  }
+}
+function applyLayout(){
+  var on = (layout==='panels');
+  gridEl.style.display = on ? 'grid' : 'none';
+  document.body.classList.toggle('panels', on);
+  if(on) layoutPanels();
+}
+
+/* ---- orbiting the image ball ---- */
+var orb={az:0.75, el:0.28, dist:3.7};
+function placeCam(){
+  var ce=Math.cos(orb.el);
+  vcam.position.set(orb.dist*ce*Math.sin(orb.az), orb.dist*Math.sin(orb.el), orb.dist*ce*Math.cos(orb.az));
+  vcam.lookAt(0,0,0);
+}
+var drag=false, lx=0, ly=0;
+canvas.addEventListener('pointerdown',function(e){ drag=true; lx=e.clientX; ly=e.clientY; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener('pointerup',function(e){ drag=false; });
+canvas.addEventListener('pointercancel',function(){ drag=false; });
+canvas.addEventListener('pointermove',function(e){
+  if(!drag || layout==='panels') return;
+  orb.az -= (e.clientX-lx)*0.006;
+  orb.el += (e.clientY-ly)*0.006;
+  orb.el = Math.max(-1.45, Math.min(1.45, orb.el));
+  lx=e.clientX; ly=e.clientY; placeCam();
+});
+canvas.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var f = 1 + Math.sign(e.deltaY)*0.09;
+  if(layout==='panels'){
+    panelZoom = Math.max(0.35, Math.min(3.0, panelZoom*f));
+    layoutPanels();
+  } else {
+    orb.dist = Math.max(1.25, Math.min(14, orb.dist*f));
+    placeCam();
+  }
+},{passive:false});
+
+/* ---- actions ---- */
+var RS=1.1, MS=3.2;
+// In the mission, sidesteps crawl so the fast way to a target is to turn
+// toward it and fly forward, not to slide there one axis at a time.
+var STRAFE=0.38;
+function SS(){ return sceneKey==='goal' ? MS*STRAFE : MS; }
+var ACT={
+  'x+':function(d){move(0,d*SS())},  'x-':function(d){move(0,-d*SS())},
+  'y+':function(d){move(1,d*SS())},  'y-':function(d){move(1,-d*SS())},
+  'z+':function(d){move(2,d*SS())},  'z-':function(d){move(2,-d*SS())},
+  'w+':function(d){move(3,d*MS)},  'w-':function(d){move(3,-d*MS)},
+  'XY+':function(d){rot(0,1,d*RS)}, 'XY-':function(d){rot(0,1,-d*RS)},
+  'XZ+':function(d){rot(0,2,d*RS)}, 'XZ-':function(d){rot(0,2,-d*RS)},
+  'YZ+':function(d){rot(1,2,d*RS)}, 'YZ-':function(d){rot(1,2,-d*RS)},
+  'XW+':function(d){rot(0,3,d*RS)}, 'XW-':function(d){rot(0,3,-d*RS)},
+  'YW+':function(d){rot(1,3,d*RS)}, 'YW-':function(d){rot(1,3,-d*RS)},
+  'ZW+':function(d){rot(2,3,d*RS)}, 'ZW-':function(d){rot(2,3,-d*RS)}
+};
+var KEYS={
+  KeyD:'x+',KeyA:'x-',KeyR:'y+',KeyF:'y-',KeyE:'z+',KeyQ:'z-',KeyW:'w+',KeyS:'w-',
+  ArrowRight:'XW-',ArrowLeft:'XW+',ArrowUp:'YW-',ArrowDown:'YW+',
+  KeyZ:'XY+',KeyX:'XY-',BracketRight:'ZW-',BracketLeft:'ZW+',
+  KeyN:'XZ-',KeyM:'XZ+',KeyK:'YZ-',KeyL:'YZ+'
+};
+var active={};
+window.addEventListener('keydown',function(e){
+  if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT') return;
+  var a=KEYS[e.code]; if(a){ active[a]=1; e.preventDefault(); }
+});
+window.addEventListener('keyup',function(e){ var a=KEYS[e.code]; if(a) delete active[a]; });
+window.addEventListener('blur',function(){ active={}; });
+
+/* touch / click pad */
+function buildPad(el, items){
+  var h='';
+  for(var i=0;i<items.length;i++) h+='<button data-a="'+items[i][0]+'">'+items[i][1]+'</button>';
+  el.innerHTML=h;
+  Array.prototype.forEach.call(el.querySelectorAll('button'),function(b){
+    var a=b.dataset.a;
+    b.addEventListener('pointerdown',function(e){ e.preventDefault(); active[a]=1; b.classList.add('on'); b.setPointerCapture(e.pointerId); });
+    function off(){ delete active[a]; b.classList.remove('on'); }
+    b.addEventListener('pointerup',off); b.addEventListener('pointercancel',off); b.addEventListener('pointerleave',off);
+  });
+}
+buildPad(document.getElementById('padT'),[
+  ['x-','◂ x'],['x+','x ▸'],['y-','▾ y'],['y+','y ▴'],
+  ['z-','◂ z'],['z+','z ▸'],['w-','◂ w'],['w+','w ▸']]);
+buildPad(document.getElementById('padR'),[
+  ['XY-','xy−'],['XY+','xy+'],['XZ-','xz−'],['XZ+','xz+'],
+  ['YZ-','yz−'],['YZ+','yz+'],['ZW-','zw−'],['ZW+','zw+'],
+  ['XW-','xw−'],['XW+','xw+'],['YW-','yw−'],['YW+','yw+']]);
+
+/* ---- UI wiring ---- */
+var $=function(id){ return document.getElementById(id); };
+$('fov').addEventListener('input',function(){
+  var deg=+this.value; thetaMax=deg*Math.PI/360; $('fovv').textContent=deg+'°'; dirty=true;
+});
+$('curv').addEventListener('input',function(){
+  curv=+this.value/100;
+  $('curvv').textContent = curv>0.995?'3-sphere':(curv<0.005?'flat':Math.round(curv*100)+'% curved');
+  dirty=true;
+});
+$('fade').addEventListener('input',function(){ fade=+this.value/100; $('fadev').textContent=fade.toFixed(2); dirty=true; });
+$('showFilm').addEventListener('change',function(){ film.visible=this.checked; });
+$('showAx').addEventListener('change',function(){ axPts.visible=this.checked; });
+var spin=false;
+$('spin').addEventListener('change',function(){ spin=this.checked; });
+$('edge').addEventListener('input',function(){
+  solidUni.uEdge.value=+this.value/100; $('edgev').textContent=(+this.value/100).toFixed(2);
+});
+$('shadow').addEventListener('change',function(){ solidUni.uShadow.value=this.checked?1:0; });
+$('light').addEventListener('input',function(){
+  lightAna = (+this.value)*Math.PI/180; $('lightv').textContent = this.value+'°'; setLight();
+});
+$('opaque').addEventListener('change',function(){ opaque=this.checked; syncSolid(); dirty=true; });
+$('solid').addEventListener('change',function(){ collideOn=this.checked; });
+var showRange=false;
+$('showrange').addEventListener('change',function(){ showRange=this.checked; });
+$('newlevel').addEventListener('click',newLevel);
+$('again').addEventListener('click',newLevel);
+function newLevel(){
+  goalSeed++;
+  genGoal(goalSeed);
+  if(sceneKey!=='goal'){ sceneKey='goal'; $('scene').value='goal'; }
+  refreshSolids();
+  resetCam();
+}
+function syncMission(){
+  var on = (sceneKey==='goal');
+  $('missiongrp').style.display = on ? '' : 'none';
+  $('mission').style.display = on ? '' : 'none';
+  if(!on) $('win').classList.remove('show');
+}
+$('scene').addEventListener('change',function(){
+  sceneKey=this.value; refreshSolids(); resetCam(); syncMission();
+});
+$('layout').addEventListener('change',function(){ layout=this.value; applyLayout(); });
+$('reset').addEventListener('click',resetCam);
+function resetCam(){
+  var s=SCENES[sceneKey].start;
+  cam.p=[s[0],s[1],s[2],s[3]];
+  cam.e=[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
+  prevP=[cam.p[0],cam.p[1],cam.p[2],cam.p[3]];
+  pathLen=0; won=false; tethered=false;
+  $('win').classList.remove('show');
+  dirty=true;
+}
+var tg=$('toggle'), pn=$('panel');
+tg.addEventListener('click',function(){ pn.classList.remove('hid'); tg.classList.remove('show'); resize(); });
+$('hide').addEventListener('click',function(){ pn.classList.add('hid'); tg.classList.add('show'); resize(); });
+
+/* ---- resize ---- */
+var stageW=1, stageH=1;
+function resize(){
+  var W=window.innerWidth, H=window.innerHeight, rr=0, rb=0;
+  if(pn && !pn.classList.contains('hid')){
+    var b=pn.getBoundingClientRect();
+    if(W>760) rr=Math.max(0, W-b.left+12); else rb=Math.max(0, H-b.top+12);
+  }
+  stageW=Math.max(240, W-rr); stageH=Math.max(240, H-rb);
+  canvas.style.right=rr+'px'; canvas.style.bottom=rb+'px';
+  gridEl.style.right=rr+'px'; gridEl.style.bottom=rb+'px';
+  renderer.setSize(stageW,stageH,false);
+  vcam.aspect=stageW/stageH; vcam.updateProjectionMatrix();
+  var wc=$('win');
+  if(wc){ wc.style.left=(stageW*0.5)+'px'; wc.style.top=(stageH*0.46)+'px'; }
+  if(layout==='panels') layoutPanels();
+}
+window.addEventListener('resize',resize);
+resize(); placeCam();
+
+/* ---- loop ---- */
+var last=0, frame=0, lastContact=false;
+function fmt(v){ return (v>=0?' ':'') + v.toFixed(2); }
+function loop(ts){
+  requestAnimationFrame(loop);
+  var dt = last ? Math.min(0.05,(ts-last)/1000) : 0; last=ts;
+  var moved=false;
+  for(var a in active){ if(ACT[a]){ ACT[a](dt); moved=true; } }
+  if(spin){ rot(2,3,dt*0.22); moved=true; }
+  if(moved){
+    ortho(); collide(); tether();
+    var dd=0, kk;
+    for(kk=0;kk<4;kk++){ var tt=cam.p[kk]-prevP[kk]; dd+=tt*tt; }
+    pathLen += Math.sqrt(dd);
+    for(kk=0;kk<4;kk++) prevP[kk]=cam.p[kk];
+    checkWin();
+    dirty=true;
+  }
+  if(sceneKey==='lattice' && moved) dirty=true;
+  if(dirty){ rebuild(); dirty=false; }
+  renderer.clear();
+  if(layout==='panels'){
+    var W=stageW, H=stageH;
+    renderer.setScissorTest(true);
+    for(var vq=0;vq<6;vq++){
+      var rr=Math.floor(vq/cols), cc=vq%cols;
+      var vx=cc*cellW, vy=H-(rr+1)*cellH;
+      renderer.setViewport(vx,vy,cellW,cellH);
+      renderer.setScissor(vx,vy,cellW,cellH);
+      renderer.render(scene,pcams[order[vq]]);
+    }
+    renderer.setScissorTest(false);
+    renderer.setViewport(0,0,W,H);
+  } else {
+    renderer.render(scene,vcam);
+  }
+  if((frame++ & 7)===0){
+    $('pos').textContent = cam.p.map(fmt).join(', ');
+    $('fwd').textContent = cam.e[3].map(fmt).join(', ');
+    if(sceneKey==='goal'){
+      var p=cam.p, rad=Math.sqrt(p[0]*p[0]+p[1]*p[1]+p[2]*p[2]+p[3]*p[3]);
+      $('tether').textContent = rad.toFixed(1)+' / '+LEASH.toFixed(1)+(tethered?' taut':'');
+      $('plen').textContent = pathLen.toFixed(1);
+      $('rangeline').textContent = showRange ? ('  ·  range ' + distToTarget().toFixed(2)) : '';
+      film.material.color.setHex(tethered ? 0x6a5428 : 0x2a4250);
+    }
+  }
+  if(contact!==lastContact){ $('contact').textContent = contact?'· contact':''; lastContact=contact; }
+}
+applyLayout();
+syncMission();
+opaque = $('opaque').checked;
+showRange = $('showrange').checked;
+refreshSolids();
+resetCam();
+rebuild();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
+
+</body></html>
